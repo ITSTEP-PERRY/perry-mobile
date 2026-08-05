@@ -1,4 +1,14 @@
 {
   "name": "perry",
-  "displayName": "perry"
+  "displayName": "perry",
+  "expo": {
+    "androidStatusBar": {
+      "barStyle": "light-content",
+      "backgroundColor": "#4A7BD9",
+      "translucent": false
+    },
+    "plugins": [
+      "expo-asset"
+    ]
+  }
 }
