@@ -5,21 +5,26 @@ import { LegalNoticeScreen } from './src/screens/legal/LegalNotice';
 import { PrivacyPolicyScreen } from './src/screens/legal/PrivacyPolicy';
 import { LicenceAgreementScreen } from './src/screens/legal/LicenceAgreement';
 import { TermsConditionsScreen } from './src/screens/legal/TermsConditions';
+import { NotFoundScreen } from './src/screens/system/NotFound';
 
 export default function App() {
-  const [currentScreen, setCurrentScreen] = useState<string>('legalNotice');
+  //const [currentScreen, setCurrentScreen] = useState<string>('legalNotice');
+  const [currentScreen, setCurrentScreen] = useState<string>('notFound');
 
   return (
+
     <SafeAreaProvider>
-      <SafeAreaView style={styles.container} edges={['top', 'bottom', 'left', 'right']}>
+      <SafeAreaView style={[styles.container, currentScreen === 'notFound' && styles.notFoundBackground]} edges={['top', 'bottom', 'left', 'right']}>
+
         <View style={styles.content}>
-          {currentScreen === 'legalNotice' && (
+        {/*  {currentScreen === 'legalNotice' && (
             <LegalNoticeScreen
               onTermsPress={() => setCurrentScreen('terms')}
               onLicencePress={() => setCurrentScreen('licence')}
               onPrivacyPress={() => setCurrentScreen('privacy')}
             />
-          )}
+          )}*/}
+
           {currentScreen === 'privacy' && (
             <PrivacyPolicyScreen 
             onBackPress={() => setCurrentScreen('legalNotice')}
@@ -39,7 +44,12 @@ export default function App() {
             onBackPress={() => setCurrentScreen('legalNotice')}
             onLicencePress={() => setCurrentScreen('licence')}
             onPrivacyPress={() => setCurrentScreen('privacy')}
-          />
+            />
+          )}
+          {currentScreen === 'notFound' && (
+            <NotFoundScreen 
+              onReturnHome={() => setCurrentScreen('legalNotice')} 
+            />
           )}
         </View>
       </SafeAreaView>
@@ -51,6 +61,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFFFFF',
+  },
+  notFoundBackground: {
+    backgroundColor: '#3962A8',
   },
   content: {
     flex: 1,
