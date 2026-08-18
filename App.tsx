@@ -6,17 +6,23 @@ import { PrivacyPolicyScreen } from './src/screens/legal/PrivacyPolicy';
 import { LicenceAgreementScreen } from './src/screens/legal/LicenceAgreement';
 import { TermsConditionsScreen } from './src/screens/legal/TermsConditions';
 import { NotFoundScreen } from './src/screens/system/NotFound';
+import { CheckOutScreen } from './src/screens/checkout/CheckOut';
+
 
 export default function App() {
   //const [currentScreen, setCurrentScreen] = useState<string>('legalNotice');
-  const [currentScreen, setCurrentScreen] = useState<string>('notFound');
+  //const [currentScreen, setCurrentScreen] = useState<string>('notFound');
+  const [currentScreen, setCurrentScreen] = useState<string>('checkOut');
 
   return (
 
     <SafeAreaProvider>
       <SafeAreaView style={[styles.container, currentScreen === 'notFound' && styles.notFoundBackground]} edges={['top', 'bottom', 'left', 'right']}>
-
+        
         <View style={styles.content}>
+
+          {currentScreen === 'checkOut' && (<CheckOutScreen onTermsPress={() => setCurrentScreen('terms')} />)}
+
         {/*  {currentScreen === 'legalNotice' && (
             <LegalNoticeScreen
               onTermsPress={() => setCurrentScreen('terms')}
