@@ -7,12 +7,14 @@ import { LicenceAgreementScreen } from './src/screens/legal/LicenceAgreement';
 import { TermsConditionsScreen } from './src/screens/legal/TermsConditions';
 import { NotFoundScreen } from './src/screens/system/NotFound';
 import { CheckOutScreen } from './src/screens/checkout/CheckOut';
+import { MenuScreen } from './src/screens/system/Menu';
 
 
 export default function App() {
   //const [currentScreen, setCurrentScreen] = useState<string>('legalNotice');
   //const [currentScreen, setCurrentScreen] = useState<string>('notFound');
-  const [currentScreen, setCurrentScreen] = useState<string>('checkOut');
+  //const [currentScreen, setCurrentScreen] = useState<string>('checkOut');
+  const [currentScreen, setCurrentScreen] = useState<string>('menu');
 
   return (
 
@@ -21,7 +23,14 @@ export default function App() {
         
         <View style={styles.content}>
 
-          {currentScreen === 'checkOut' && (<CheckOutScreen onTermsPress={() => setCurrentScreen('terms')} />)}
+          {currentScreen == 'menu' && (
+            <MenuScreen
+            isAuthenticated={true}
+            onClose={() => setCurrentScreen('checkOut')}
+            />
+          )}
+
+          {/*currentScreen === 'checkOut' && (<CheckOutScreen onTermsPress={() => setCurrentScreen('terms')} />)}
 
         {/*  {currentScreen === 'legalNotice' && (
             <LegalNoticeScreen
