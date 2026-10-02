@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, SafeAreaView } from 'react-native';
 import { SvgXml } from 'react-native-svg';
+import { useNavigation } from '@react-navigation/native';
 
 const logoIcon = `<svg width="65" height="16" viewBox="0 0 65 16" fill="none" xmlns="http://www.w3.org/2000/svg">
 <path d="M49.949 15.7734C49.7133 15.7734 49.4867 15.6827 49.3054 15.5014L42.5065 8.43059C42.2436 8.1677 42.1711 7.7779 42.3071 7.43342C42.4431 7.08895 42.7785 6.87138 43.1411 6.86232C45.5705 6.85325 46.5768 6.29122 47.0028 5.81983C47.3201 5.46629 47.447 5.00396 47.3836 4.41473C47.2476 2.96431 45.9241 1.83116 44.3739 1.83116H39.4153C38.9167 1.83116 38.5088 1.42323 38.5088 0.915581C38.5088 0.407932 38.9167 0 39.4153 0H44.3739C46.8487 0 48.97 1.86742 49.1875 4.25156C49.2873 5.35751 48.9972 6.32748 48.3445 7.06175C47.7371 7.73258 46.8578 8.20396 45.6793 8.45779C45.4708 8.50311 45.3892 8.75694 45.5343 8.91104L50.5745 14.2051C50.928 14.5586 50.928 15.1388 50.5745 15.5014C50.4113 15.6827 50.1756 15.7734 49.949 15.7734ZM5.86516 0.00906536H0.906516C0.407932 0.00906536 0 0.426063 0 0.933711V14.8578C0 15.3654 0.407932 15.7824 0.906516 15.7824C1.4051 15.7824 1.81303 15.3654 1.81303 14.8578V2.13031C1.81303 1.9762 1.93994 1.84929 2.08499 1.84929H5.85609C7.40623 1.84929 8.72975 2.9915 8.86572 4.45099C8.92011 5.04929 8.7932 5.51161 8.48499 5.86515C8.06799 6.33654 7.05269 6.89858 4.62323 6.91671C4.12465 6.91671 3.71671 7.33371 3.72578 7.84136C3.72578 8.349 4.13371 8.75694 4.6323 8.75694C7.15241 8.74787 8.84759 8.20396 9.82663 7.09801C10.4793 6.36374 10.7785 5.3847 10.6697 4.26969C10.4612 1.88555 8.34901 0.00906536 5.86516 0.00906536ZM63.3382 0.00906536C62.8397 0.00906536 62.4317 0.435127 62.4317 0.95184V5.84702C62.4317 6.39093 62.4408 6.34561 62.4317 6.74447C62.4227 7.02549 62.2504 7.14334 62.0419 7.18867C60.655 7.29745 58.3887 7.46062 56.9292 6.93484C54.8986 6.20056 54.7445 4.1881 54.7445 1.1966V0.960906C54.7445 0.435127 54.3365 0.0181307 53.838 0.0181307C53.3394 0.0181307 52.9314 0.444192 52.9314 0.960906V1.1966C52.9314 3.85269 52.9224 7.49688 56.3309 8.72068C57.2646 9.05609 58.4521 9.17393 59.7394 9.17393C60.5009 9.17393 61.3077 9.12861 62.1054 9.07422C62.2686 9.06515 62.3955 9.19206 62.3955 9.35524C62.3955 9.82662 62.3955 10.3977 62.3955 11.0957C62.3955 11.7122 62.1507 12.247 61.6703 12.7093C60.8 13.5433 59.2227 14.0057 57.736 13.8606C56.1586 13.7065 55.089 12.945 54.3728 11.4493C54.1462 10.9779 53.6023 10.7966 53.1581 11.0232C52.7139 11.2589 52.5326 11.821 52.7501 12.2923C53.7473 14.3683 55.37 15.5286 57.5728 15.7462C57.8176 15.7734 58.0623 15.7824 58.3071 15.7824C60.0748 15.7824 61.7881 15.166 62.9031 14.1144C63.7643 13.2895 64.2266 12.2561 64.2266 11.1048C64.2266 8.64816 64.2357 7.78697 64.2448 7.13428C64.2448 6.73541 64.2538 6.40906 64.2538 5.86515V0.969971C64.2448 0.426062 63.8368 0.00906536 63.3382 0.00906536ZM33.2057 9.02889C33.0516 8.87478 33.1331 8.61189 33.3507 8.56657C34.5292 8.30368 35.4085 7.83229 36.0159 7.1524C36.6686 6.40906 36.9677 5.43003 36.8589 4.30595C36.6323 1.89462 34.5201 0.00906536 32.0453 0.00906536H27.0867C26.5881 0.00906536 26.1802 0.426063 26.1802 0.933711V14.8487C26.1802 15.3654 26.5881 15.7734 27.0867 15.7734C27.5853 15.7734 27.9932 15.3564 27.9932 14.8487V2.14844C27.9932 1.99433 28.1201 1.86742 28.2652 1.86742H32.0363C33.5864 1.86742 34.9099 3.0187 35.0459 4.48725C35.1003 5.09462 34.9734 5.55694 34.6652 5.91048C34.2482 6.38187 33.2329 6.95297 30.8034 6.96204C30.4408 6.96204 30.1054 7.18866 29.9694 7.53314C29.8334 7.87762 29.9059 8.27648 30.1688 8.53937L36.9677 15.4923C37.3212 15.855 37.8923 15.855 38.2459 15.4923C38.5994 15.1297 38.5994 14.5405 38.2459 14.1779L33.2057 9.02889Z" fill="#4A7BD9"/>
@@ -11,8 +12,7 @@ const letterEIcon = `<svg width="12" height="16" viewBox="0 0 12 16" fill="none"
 </svg>`;
 
 const defaultAvatar = 'https://media.licdn.com/dms/image/v2/D4D03AQHb9qubRl69Cg/profile-displayphoto-shrink_200_200/profile-displayphoto-shrink_200_200/0/1723113428087?e=2147483647&v=beta&t=YnvZ7Jda-CX2cdC5YjvwC0x0NM69TuYo3mV2120wTqk';
-
-const guestAvatar = 'https://media.licdn.com/dms/image/v2/D560BAQFDOEPT527ilw/company-logo_200_200/company-logo_200_200/0/1705441552705/eddy_energy_llc_logo?e=2147483647&v=beta&t=5D6Br89WTWP5DmJa3NQhr3S3kfG1KPHK5UNdIMWxIiU'
+const guestAvatar = 'https://media.licdn.com/dms/image/v2/D560BAQFDOEPT527ilw/company-logo_200_200/company-logo_200_200/0/1705441552705/eddy_energy_llc_logo?e=2147483647&v=beta&t=5D6Br89WTWP5DmJa3NQhr3S3kfG1KPHK5UNdIMWxIiU';
 
 const closeIcon = `<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
 <path d="M10.3999 10.4004L21.2045 21.205" stroke="black" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round"/>
@@ -85,6 +85,7 @@ interface MenuScreenProps {
     avatarUrl?: string;
   };
   onClose?: () => void;
+  onLoginPress?: () => void;
   navigation?: any;
 }
 
@@ -95,12 +96,14 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({
     role: 'Customer',
   },
   onClose,
-  navigation,
+  onLoginPress,
 }) => {
+  const navigation = useNavigation<any>();
   const [isCatalogOpen, setIsCatalogOpen] = useState(false);
   const [testAuthState, setTestAuthState] = useState(isAuthenticated);
 
   const isUserLoggedIn = Boolean(testAuthState);
+
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -142,7 +145,7 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({
               <Text style={styles.guestSubtitle}>
                 Log in to enjoy a more pleasant experience
               </Text>
-              <TouchableOpacity style={styles.primaryAuthBtn}>
+              <TouchableOpacity style={styles.primaryAuthBtn} onPress={onLoginPress}>
                 <Text style={styles.primaryAuthBtnText}>Log In</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.secondaryAuthBtn}>
@@ -206,12 +209,16 @@ export const MenuScreen: React.FC<MenuScreenProps> = ({
 
           {isUserLoggedIn ? (
             <>
-              <TouchableOpacity style={styles.menuItem}>
-                <View style={styles.menuItemLeft}>
-                  <SvgXml xml={settingsIcon} width="24" height="24" style={styles.iconSpacing} />
-                  <Text style={styles.menuText}>Settings</Text>
-                </View>
-              </TouchableOpacity>
+              <TouchableOpacity style={styles.menuItem} onPress={() => {
+              onClose?.(); 
+              navigation.navigate('AccountSettings'); 
+            }}
+            >
+              <View style={styles.menuItemLeft}>
+            <SvgXml xml={settingsIcon} width="24" height="24" style={styles.iconSpacing} />
+          <Text style={styles.menuText}>Settings</Text>
+        </View>
+      </TouchableOpacity>
 
               <TouchableOpacity style={styles.menuItem}>
                 <View style={styles.menuItemLeft}>
