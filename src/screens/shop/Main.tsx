@@ -1,6 +1,7 @@
-import React, { useRef } from 'react';
-import { StyleSheet, View, Text, TextInput, ScrollView, Image, ImageBackground, TouchableOpacity, Dimensions } from 'react-native';
+import React, { useRef, useState, useEffect } from 'react';
+import { StyleSheet, View, Text, TextInput, ScrollView, Image, ImageBackground, TouchableOpacity, Dimensions, ActivityIndicator } from 'react-native';
 import { SvgXml } from 'react-native-svg';
+import { Product } from '../../types/Product';
 
 
 const { width } = Dimensions.get('window');
@@ -111,16 +112,6 @@ interface MainScreenProps {
   onLogInPress?: () => void;
 }
 
-interface Product {
-  id: string;
-  title: string;
-  rating: number;
-  reviews: number;
-  price: string;
-  oldPrice?: string;
-  discountBadge?: string;
-  image: any;
-}
 
 const TRENDING_PRODUCTS: Product[] = [
   {
@@ -293,7 +284,10 @@ const ProductCardItem: React.FC<{ product: Product; cardWidth?: number }> = ({ p
   return (
     <TouchableOpacity style={[styles.productCard, cardWidth ? { width: cardWidth } : null]}>
       <View style={styles.imageContainer}>
-        <Image source={product.image} style={styles.productImage} />
+        <Image 
+          source={typeof product.image === 'string' ? { uri: product.image } : product.image} 
+          style={styles.productImage} 
+        />
         {product.discountBadge && (
           <View style={styles.discountBadgeWrapper}>
             <SvgXml xml={discountBadge} width={55} height={37} />
@@ -338,6 +332,103 @@ export const MainScreen: React.FC<MainScreenProps> = ({
   onSignInPress,
   onLogInPress,
 }) => {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [page, setPage] = useState<number>(1);
+  const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
+  const [hasMore, setHasMore] = useState<boolean>(true);
+
+  const mapProductItem = (item: any): Product => ({
+    id: String(item.id),
+    title: item.title || item.name || 'Without title',
+    price: item.price ? `$${item.price.toFixed(2)}` : '$0.00',
+    oldPrice: item.oldPrice ? `$${item.oldPrice.toFixed(2)}` : undefined,
+    discountBadge: item.discountPercent ? `- ${item.discountPercent}%` : undefined,
+    rating: item.rating ?? item.averageRating ?? 0,
+    reviews: item.reviewsCount ?? item.reviews ?? 0,
+    image: item.imageUrl || item.image || '',
+  });
+
+  useEffect(() => {
+    let isMounted = true;
+    const controller = new AbortController();
+
+    console.log('Отправка запроса');
+
+    fetch('http://10.0.2.2:5272/api/Products?pageNumber=1', { signal: controller.signal })
+      .then(async (response) => {
+        console.log('Ответ от сервера status:', response.status);
+        if (!response.ok) {
+          throw new Error(`Server status: ${response.status}`);
+        }
+        
+        const text = await response.text();
+        const parsedData = text ? JSON.parse(text) : [];
+        console.log('Полученные данные:', parsedData);
+        return parsedData;
+      })
+      .then((data) => {
+        if (isMounted) {
+          const productsList = Array.isArray(data?.items) ? data.items : (Array.isArray(data) ? data : []);
+
+          if (productsList.length > 0) {
+            const mappedProducts = productsList.map(mapProductItem);
+            setProducts(mappedProducts);
+            setHasMore(data.hasNextPage ?? (productsList.length > 0));
+          } else {
+            console.warn('Массив items пуст! Использован TRENDING_PRODUCTS');
+            setProducts(TRENDING_PRODUCTS);
+            setHasMore(false);
+          }
+        }
+      })
+      .catch((error) => {
+        if (error.name === 'AbortError') return;
+
+        console.error('Ошибка при получении товаров:', error.message || error);
+        if (isMounted) {
+          // setProducts(TRENDING_PRODUCTS);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+      controller.abort();
+    };
+  }, []);
+
+  const loadNextPage = async () => {
+    if (isLoadingMore || !hasMore) return;
+
+    setIsLoadingMore(true);
+    const nextPage = page + 1;
+
+    try {
+      console.log(`Загрузка страницы ${nextPage}...`);
+      const response = await fetch(`http://10.0.2.2:5272/api/Products?pageNumber=${nextPage}`);
+      
+      if (!response.ok) {
+        throw new Error(`Server status: ${response.status}`);
+      }
+
+      const text = await response.text();
+      const parsedData = text ? JSON.parse(text) : [];
+      const productsList = Array.isArray(parsedData?.items) ? parsedData.items : (Array.isArray(parsedData) ? parsedData : []);
+
+      if (productsList.length > 0) {
+        const newMappedProducts = productsList.map(mapProductItem);
+        setProducts((prev) => [...prev, ...newMappedProducts]);
+        setPage(nextPage);
+        setHasMore(parsedData.hasNextPage ?? true);
+      } else {
+        setHasMore(false);
+      }
+    } catch (error: any) {
+      console.error('Ошибка при загрузке следующей страницы:', error.message || error);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
+
   const mainScrollRef = useRef<ScrollView>(null);
   const scrollRef1 = useRef<ScrollView>(null);
   const scrollRef2 = useRef<ScrollView>(null);
@@ -501,14 +592,24 @@ export const MainScreen: React.FC<MainScreenProps> = ({
         <View style={styles.sectionContainer}>
           <Text style={styles.sectionHeader}>Trending deals</Text>
           <View style={styles.productsGrid}>
-            {TRENDING_PRODUCTS.map((product) => (
+            {(products || []).map((product) => (
               <ProductCardItem key={product.id} product={product} />
             ))}
           </View>
 
-          <TouchableOpacity style={styles.seeAllButton}>
-            <Text style={styles.seeAllButtonText}>See all</Text>
-          </TouchableOpacity>
+          {hasMore && (
+            <TouchableOpacity 
+              style={styles.seeAllButton} 
+              onPress={loadNextPage} 
+              disabled={isLoadingMore}
+            >
+              {isLoadingMore ? (
+                <ActivityIndicator size="small" color="#4A7BD9" />
+              ) : (
+                <Text style={styles.seeAllButtonText}>See all</Text>
+              )}
+            </TouchableOpacity>
+          )}
         </View>
 
         <View style={styles.divider} />
