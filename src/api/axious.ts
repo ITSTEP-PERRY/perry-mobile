@@ -1,8 +1,12 @@
 import axios from 'axios';
+import { Platform } from 'react-native';
 
-const API_BASE_URL = 'http://10.0.2.2:5272/api';
+// Выносим IP с проверкой на Android/iOS, как у вас в config.ts
+export const API_BASE_URL = Platform.OS === 'android'
+  ? 'http://10.0.2.2:5272'
+  : 'http://localhost:5272';
 
-const apiClient = axios.create({
+export const apiClient = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10000,
   headers: {

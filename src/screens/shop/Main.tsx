@@ -3,8 +3,19 @@ import { StyleSheet, View, Text, TextInput, ScrollView, Image, ImageBackground, 
 import { SvgXml } from 'react-native-svg';
 import { Product } from '../../types/Product';
 
-
 const { width } = Dimensions.get('window');
+
+export const productService = {
+  getProductImageUrl: (id: string | number) => `http://10.0.2.2:5272/api/Products/${id}/image`,
+  getPopularProducts: async () => {
+    const res = await fetch('http://10.0.2.2:5272/api/Products/popular');
+    return res.json();
+  },
+  getProductBySlug: async (slug: string) => {
+    const res = await fetch(`http://10.0.2.2:5272/api/Products/by-slug/${slug}`);
+    return res.json();
+  },
+};
 
 const cartIcon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 <path d="M3 4.30762H5.28C7.29 4.30762 6.714 7.13362 6.426 8.35162C6.036 9.98962 6.156 11.7356 8.106 12.2096C8.496 12.3056 8.898 12.3356 9.294 12.3356H16.218C16.218 12.3356 16.41 12.3356 16.698 12.3716C18.732 12.6176 18.576 15.2816 16.53 15.2996C16.506 15.2996 16.476 15.2996 16.452 15.2996H8.682" stroke="#F2F4F8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -111,7 +122,6 @@ interface MainScreenProps {
   onSignInPress?: () => void;
   onLogInPress?: () => void;
 }
-
 
 const TRENDING_PRODUCTS: Product[] = [
   {
@@ -281,11 +291,16 @@ const renderFormattedPrice = (priceStr: string) => {
 };
 
 const ProductCardItem: React.FC<{ product: Product; cardWidth?: number }> = ({ product, cardWidth }) => {
+  
+  const imageSource = typeof product.image === 'string'
+    ? { uri: (product.image as string).startsWith('http') ? product.image : productService.getProductImageUrl(product.id) }
+    : product.image;
+
   return (
     <TouchableOpacity style={[styles.productCard, cardWidth ? { width: cardWidth } : null]}>
       <View style={styles.imageContainer}>
         <Image 
-          source={typeof product.image === 'string' ? { uri: product.image } : product.image} 
+          source={imageSource} 
           style={styles.productImage} 
         />
         {product.discountBadge && (
@@ -337,6 +352,11 @@ export const MainScreen: React.FC<MainScreenProps> = ({
   const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
   const [hasMore, setHasMore] = useState<boolean>(true);
 
+  const [saleProducts, setSaleProducts] = useState<Product[]>(SALES);
+  const [salePage, setSalePage] = useState<number>(1);
+  const [isLoadingMoreSale, setIsLoadingMoreSale] = useState<boolean>(false);
+  const [hasMoreSale, setHasMoreSale] = useState<boolean>(true);
+
   const mapProductItem = (item: any): Product => ({
     id: String(item.id),
     title: item.title || item.name || 'Without title',
@@ -354,7 +374,7 @@ export const MainScreen: React.FC<MainScreenProps> = ({
 
     console.log('Отправка запроса');
 
-    fetch('http://10.0.2.2:5272/api/Products?pageNumber=1', { signal: controller.signal })
+    fetch('http://10.0.2.2:5272/api/Products?page=1', { signal: controller.signal })
       .then(async (response) => {
         console.log('Ответ от сервера status:', response.status);
         if (!response.ok) {
@@ -372,7 +392,7 @@ export const MainScreen: React.FC<MainScreenProps> = ({
 
           if (productsList.length > 0) {
             const mappedProducts = productsList.map(mapProductItem);
-            setProducts(mappedProducts);
+            setProducts(mappedProducts.filter((item: Product, index: number, self: Product[]) => self.findIndex((t: Product) => t.id === item.id) === index));
             setHasMore(data.hasNextPage ?? (productsList.length > 0));
           } else {
             console.warn('Массив items пуст! Использован TRENDING_PRODUCTS');
@@ -386,7 +406,7 @@ export const MainScreen: React.FC<MainScreenProps> = ({
 
         console.error('Ошибка при получении товаров:', error.message || error);
         if (isMounted) {
-          // setProducts(TRENDING_PRODUCTS);
+         
         }
       });
 
@@ -404,7 +424,7 @@ export const MainScreen: React.FC<MainScreenProps> = ({
 
     try {
       console.log(`Загрузка страницы ${nextPage}...`);
-      const response = await fetch(`http://10.0.2.2:5272/api/Products?pageNumber=${nextPage}`);
+      const response = await fetch(`http://10.0.2.2:5272/api/Products?page=${nextPage}`);
       
       if (!response.ok) {
         throw new Error(`Server status: ${response.status}`);
@@ -416,7 +436,7 @@ export const MainScreen: React.FC<MainScreenProps> = ({
 
       if (productsList.length > 0) {
         const newMappedProducts = productsList.map(mapProductItem);
-        setProducts((prev) => [...prev, ...newMappedProducts]);
+        setProducts((prev) => [...prev, ...newMappedProducts].filter((item: Product, index: number, self: Product[]) => self.findIndex((t: Product) => t.id === item.id) === index));
         setPage(nextPage);
         setHasMore(parsedData.hasNextPage ?? true);
       } else {
@@ -426,6 +446,39 @@ export const MainScreen: React.FC<MainScreenProps> = ({
       console.error('Ошибка при загрузке следующей страницы:', error.message || error);
     } finally {
       setIsLoadingMore(false);
+    }
+  };
+
+  const loadNextSalePage = async () => {
+    if (isLoadingMoreSale || !hasMoreSale) return;
+
+    setIsLoadingMoreSale(true);
+    const nextPage = salePage + 1;
+
+    try {
+      console.log(`Загрузка страницы Sale ${nextPage}...`);
+      const response = await fetch(`http://10.0.2.2:5272/api/Products?page=${nextPage}`);
+      
+      if (!response.ok) {
+        throw new Error(`Server status: ${response.status}`);
+      }
+
+      const text = await response.text();
+      const parsedData = text ? JSON.parse(text) : [];
+      const productsList = Array.isArray(parsedData?.items) ? parsedData.items : (Array.isArray(parsedData) ? parsedData : []);
+
+      if (productsList.length > 0) {
+        const newMappedProducts = productsList.map(mapProductItem);
+        setSaleProducts((prev) => [...prev, ...newMappedProducts].filter((item: Product, index: number, self: Product[]) => self.findIndex((t: Product) => t.id === item.id) === index));
+        setSalePage(nextPage);
+        setHasMoreSale(parsedData.hasNextPage ?? true);
+      } else {
+        setHasMoreSale(false);
+      }
+    } catch (error: any) {
+      console.error('Ошибка при загрузке следующей страницы Sale:', error.message || error);
+    } finally {
+      setIsLoadingMoreSale(false);
     }
   };
 
@@ -712,14 +765,24 @@ export const MainScreen: React.FC<MainScreenProps> = ({
         <View style={styles.sectionContainer}>
           <Text style={styles.sectionHeader}>Sale</Text>
           <View style={styles.productsGrid}>
-            {SALES.map((product) => (
+            {saleProducts.map((product) => (
               <ProductCardItem key={product.id} product={product} />
             ))}
           </View>
 
-          <TouchableOpacity style={styles.seeAllButton}>
-            <Text style={styles.seeAllButtonText}>See all</Text>
-          </TouchableOpacity>
+          {hasMoreSale && (
+            <TouchableOpacity 
+              style={styles.seeAllButton}
+              onPress={loadNextSalePage}
+              disabled={isLoadingMoreSale}
+            >
+              {isLoadingMoreSale ? (
+                <ActivityIndicator size="small" color="#4A7BD9" />
+              ) : (
+                <Text style={styles.seeAllButtonText}>See all</Text>
+              )}
+            </TouchableOpacity>
+          )}
         </View>
 
         <View style={styles.divider} />
@@ -759,31 +822,31 @@ export const MainScreen: React.FC<MainScreenProps> = ({
 
         <View style={styles.footerContainer}>
           <View style={styles.topFooter}>
-  <Text style={styles.footerHeader}>Support</Text>
+            <Text style={styles.footerHeader}>Support</Text>
 
-  <TouchableOpacity activeOpacity={0.7} style={styles.touchableLink}>
-    <Text style={styles.footerLink}>Contact us</Text>
-  </TouchableOpacity>
+            <TouchableOpacity activeOpacity={0.7} style={styles.touchableLink}>
+              <Text style={styles.footerLink}>Contact us</Text>
+            </TouchableOpacity>
 
-  <TouchableOpacity activeOpacity={0.7} style={styles.touchableLink}>
-    <Text style={styles.footerLink}>FAQ</Text>
-  </TouchableOpacity>
+            <TouchableOpacity activeOpacity={0.7} style={styles.touchableLink}>
+              <Text style={styles.footerLink}>FAQ</Text>
+            </TouchableOpacity>
 
-  <TouchableOpacity onPress={onLegalNoticePress} activeOpacity={0.7} style={styles.touchableLink}>
-    <Text style={styles.footerLink}>Legal notice</Text>
-  </TouchableOpacity>
+            <TouchableOpacity onPress={onLegalNoticePress} activeOpacity={0.7} style={styles.touchableLink}>
+              <Text style={styles.footerLink}>Legal notice</Text>
+            </TouchableOpacity>
 
-  <TouchableOpacity onPress={onPrivacyPress} activeOpacity={0.7} style={styles.touchableLink}>
-    <Text style={styles.footerLink}>Privacy Policy</Text>
-  </TouchableOpacity>
+            <TouchableOpacity onPress={onPrivacyPress} activeOpacity={0.7} style={styles.touchableLink}>
+              <Text style={styles.footerLink}>Privacy Policy</Text>
+            </TouchableOpacity>
 
-  <TouchableOpacity onPress={onLicencePress} activeOpacity={0.7} style={styles.touchableLink}>
-    <Text style={styles.footerLink}>License agreement</Text>
-  </TouchableOpacity>
+            <TouchableOpacity onPress={onLicencePress} activeOpacity={0.7} style={styles.touchableLink}>
+              <Text style={styles.footerLink}>License agreement</Text>
+            </TouchableOpacity>
 
-  <TouchableOpacity onPress={onTermsPress} activeOpacity={0.7} style={styles.touchableLink}>
-    <Text style={styles.footerLink}>Terms and Conditions</Text>
-  </TouchableOpacity>
+            <TouchableOpacity onPress={onTermsPress} activeOpacity={0.7} style={styles.touchableLink}>
+              <Text style={styles.footerLink}>Terms and Conditions</Text>
+            </TouchableOpacity>
 
             <Text style={styles.footerHeader}>Social media</Text>
 
