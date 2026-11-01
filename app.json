@@ -1,14 +1,51 @@
 {
-  "name": "perry",
-  "displayName": "perry",
   "expo": {
-    "androidStatusBar": {
-      "barStyle": "light-content",
-      "backgroundColor": "#4A7BD9",
-      "translucent": false
+    "name": "Perry",
+    "slug": "perry-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#B8EA48"
+    },
+    "userInterfaceStyle": "light",
+    "scheme": "perry",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.itstep.perry.mobile"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#B8EA48",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "package": "com.itstep.perry.mobile",
+      "versionCode": 1,
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": false,
+          "data": [
+            {
+              "scheme": "perry",
+              "host": "product",
+              "pathPrefix": "/"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ],
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-asset"
+      "expo-secure-store"
     ]
   }
 }

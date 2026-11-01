@@ -1,97 +1,93 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+﻿# Perry Mobile (Expo)
 
-# Getting Started
+Клиент покупателя на **Expo / React Native** под тот же Auth + Product API, что и web-витрина.  
+Макеты: Figma iPhone frames (`cF0bKFsmenH6rrshGV0yO7`).  
+План: `docs/МОБИЛЬНОЕ-ПРИЛОЖЕНИЕ-REACT.md` · решение: `docs/РЕШЕНИЕ-MOBILE-С-КОДОМ.md`.  
+**Отчёт 01.10:** `docs/ОТЧЁТ-2026-10-01.md`.  
+**Отчёт 07.10 (LAN / wishlist / #M09):** `docs/журнал/2026-10-07.md` · готовность проекта **~96%**.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+**Вне скоупа:** админка. Internal Auth (#97) — Done на Product API.
 
-## Step 1: Start Metro
+## Быстрый запуск
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+Двойной клик по ярлыку **Perry Mobile** (корень репо / рабочий стол) → http://localhost:8081  
+Или: `..\start-mobile.cmd` · установка ярлыков: `..\Install-Perry-Shortcuts.ps1`.  
+Нужен **Perry.Api** на `:5272`.
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+## Запуск (вручную)
 
-```sh
-# Using npm
+```bash
+cd mobile
+cp .env.example .env
+# поправьте EXPO_PUBLIC_PRODUCT_URL под среду
 npm start
-
-# OR using Yarn
-yarn start
+# затем: a (Android) / i (iOS) / w (web)
 ```
 
-## Step 2: Build and run your app
+| Среда | Product URL |
+|-------|-------------|
+| Expo Web (`:8081`) | Metro proxy `/api` → ПК |
+| Expo Go (телефон) | авто: LAN IP ПК из Metro (`192.168.x.x:5272`) |
+| Android emulator | fallback `http://10.0.2.2:5272` |
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+Auth по умолчанию — Azure Auth Service (как web).
 
-### Android
+**Expo Go:** телефон и ПК в одной Wi‑Fi; API слушает `0.0.0.0:5272` (не только localhost).  
+Красная плашка «Product unreachable» = телефон бил в `localhost` на себе или API не слушал LAN.
 
-```sh
-# Using npm
-npm run android
+## Что уже есть (MVP каркас)
 
-# OR using Yarn
-yarn android
+| Экран | Figma / роль |
+|-------|----------------|
+| Home | iPhone Main — категории, trending, CTA |
+| Catalog | Product List 2 колонки |
+| PDP | галерея swipe, buy-box, wishlist |
+| Cart / Checkout / Orders | guest session + merge + checkout |
+| Login / Register / Forgot | Sign up & Log in - Mobile |
+| Menu guest/customer | iPhone Menu |
+| Account / Wishlist / Reviews | P1 stubs wired to API |
+
+API-слой — порт с `perry-front` `src/api/*` + SecureStore + absolute media URLs.
+
+## Структура
+
+```text
+mobile/
+  App.tsx
+  src/api/          # client, token, media, types, endpoints
+  src/auth/         # AuthContext
+  src/cart/         # CartContext
+  src/components/   # Header, ProductCard, MenuDrawer, PrimaryButton
+  src/navigation/   # tabs + stack
+  src/screens/      # Home, Products, Product, Cart, Checkout, Auth, Account…
+  src/theme/        # Perry colors
 ```
 
-### iOS
+## Smoke
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
+1. `GET {PRODUCT}/api/health`  
+2. Home показывает товары  
+3. Login → JWT в SecureStore  
+4. PDP → To cart → Checkout → My orders  
+5. PDP → сердце (wishlist) при логине → `POST /api/wishlist` 200  
 
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
+## EAS (#M09)
 
-```sh
-bundle install
+Статус **07.10:** подготовка готова (`eas.json`, splash, deep link, LAN origin). Cloud build ждёт `eas login` (аккаунт Expo).
+
+```bash
+cd mobile
+npx eas-cli@latest login
+npx eas-cli@latest init          # один раз — привязка projectId на expo.dev
+npx eas-cli@latest build -p android --profile preview
 ```
 
-Then, and every time you update your native dependencies, run:
+Профили в `eas.json`: `development` / `preview` (APK) / `production` (AAB).  
+Deep link: `perry://product/{id}`. Splash/иконки — в `app.json` + `assets/`.
 
-```sh
-bundle exec pod install
-```
+Для preview на эмуляторе задайте `EXPO_PUBLIC_PRODUCT_URL` в EAS secrets или пересоберите с `.env` (на устройстве — LAN IP ПК, не `localhost`).
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
+## Примечание по навигации
 
-```sh
-# Using npm
-npm run ios
-
-# OR using Yarn
-yarn ios
-```
-
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
-
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
-
-## Step 3: Modify your app
-
-Now that you have successfully run the app, let's make changes!
-
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
-
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
-
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
-
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+Корневой stack + tabs; Menu открывает экраны Login/Orders/Wishlist и т.д.  
+Пиксель-перфект Figma можно добить итерациями — сейчас приоритет: данные с API + layout 390px.
