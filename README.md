@@ -3,7 +3,8 @@
 Мобильное приложение Perry — iOS, Android и web — на **Expo 57 / React Native 0.86 / TypeScript**.
 Данные берёт из **Perry.Api** (Product API) и **Azure Auth Service** (вход/регистрация).
 
-> Полная версия проекта (frontend + backend + mobile) живёт в приватных репозиториях команды.
+> Desktop-версия (React + Vite) живёт отдельно: https://github.com/ITSTEP-PERRY/perry-front
+> Бэкенд (Perry.Api на .NET 8): https://github.com/ITSTEP-PERRY/Back_end_for_our_poroject
 > Здесь — только мобильное приложение и всё, что нужно, чтобы оно работало.
 
 ---
